@@ -5300,9 +5300,7 @@ mod tests {
         fixture
             .handler
             .state_mut()
-            .update_compaction(&scheduled[0], |c| {
-                c.set_status(CompactionStatus::Completed)
-            });
+            .update_compaction(&scheduled[0], |c| c.set_status(CompactionStatus::Completed));
 
         fixture
             .handler
@@ -5325,14 +5323,17 @@ mod tests {
     async fn test_maybe_schedule_compactions_does_not_underflow_over_capacity() {
         let mut fixture = CompactorEventHandlerTestFixture::new().await;
         for (index, source) in [1u32, 2u32].iter().enumerate() {
-            fixture.handler.state_mut().add_compaction(
-                Compaction::new(
-                    Ulid::from_parts(index as u64 + 1, 0),
-                    CompactionSpec::new(vec![SourceId::SortedRun(*source)], *source),
+            fixture
+                .handler
+                .state_mut()
+                .add_compaction(
+                    Compaction::new(
+                        Ulid::from_parts(index as u64 + 1, 0),
+                        CompactionSpec::new(vec![SourceId::SortedRun(*source)], *source),
+                    )
+                    .with_status(CompactionStatus::Running),
                 )
-                .with_status(CompactionStatus::Running),
-            )
-            .expect("failed to add compaction");
+                .expect("failed to add compaction");
         }
         assert!(
             fixture.handler.running_compaction_count()
@@ -5417,7 +5418,6 @@ mod tests {
             "a drain spec must not be held back by the concurrency limit"
         );
     }
-
 
     #[tokio::test]
     async fn test_maybe_validate_submitted_compactions_completes_trivial_move() {
