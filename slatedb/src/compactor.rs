@@ -1253,10 +1253,8 @@ impl CompactorEventHandler {
                 // rather than failing work a client asked for.
                 let claimed_compaction_count = self
                     .state()
-                    .compactions_with_status(&[
-                        CompactionStatus::Scheduled,
-                        CompactionStatus::Running,
-                    ])
+                    .active_compactions()
+                    .filter(|c| c.scheduled() || c.running())
                     .count();
                 if claimed_compaction_count >= self.options.max_concurrent_compactions {
                     debug!(
@@ -1331,7 +1329,7 @@ impl CompactorEventHandler {
     fn running_compaction_count(&self) -> usize {
         self.state()
             .active_compactions()
-            .filter(|c| c.status() == CompactionStatus::Running)
+            .filter(|c| c.running())
             .count()
     }
 }
